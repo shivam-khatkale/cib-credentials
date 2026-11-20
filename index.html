@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=cc8b575a-d8d7-4976-bc5e-455bebcb024a
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=cc8b575a-d8d7-4976-bc5e-455bebcb024a
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Approval Workflow &amp; User Matrix</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{
+  --ink:#1b2447;--muted:#6b7599;--line:#dfe5f7;--blue:#2563eb;--violet:#6d28d9;--violet-line:#d9ccfb;
+  --teal:#0f9d8a;--amber:#d97706;--red:#c62828;--mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100%;color:var(--ink);font:400 15px/1.4 "DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:linear-gradient(rgba(120,140,220,.07) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(120,140,220,.07) 1px,transparent 1px) 0 0/40px 40px,
+  radial-gradient(900px 500px at 15% 0%,#e3e9ff,transparent 70%),radial-gradient(800px 500px at 95% 20%,#efe8ff,transparent 70%),#f1f4fd}
+.app{width:100%;padding:18px clamp(14px,2.2vw,36px) 30px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 14px;font:500 11px var(--mono);letter-spacing:.18em;color:var(--blue)}
+.pill i{width:10px;height:10px;border-radius:50%;background:#a9c0ff}
+h1{margin:6px 0 0;font-size:clamp(1.6rem,4vh,2.3rem);font-weight:800;letter-spacing:-.03em;line-height:1.05;background:linear-gradient(90deg,#2447d6,#2f8cf0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px 11px;font:400 .76rem var(--mono);color:#4a5578}
+.chip.v{color:var(--violet)}
+.btn{border:1px solid var(--violet);background:var(--violet);color:#fff;border-radius:12px;padding:9px 16px;font:700 .85rem "DM Sans",sans-serif;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.blue{background:var(--blue);border-color:var(--blue)}
+.btn.green{background:var(--teal);border-color:var(--teal)}
+.btn.amber{background:var(--amber);border-color:var(--amber)}
+.btn.navy{background:var(--ink);border-color:var(--ink)}
+.btn.slate{background:#e9edf8;border-color:#cfd7ee;color:#3d486d}
+.btn.red{background:#fdeeee;border-color:#e9a9a9;color:var(--red)}
+.btn.ghost{background:#fff;color:var(--violet);border-color:var(--violet-line)}
+.btn.danger{background:#fff;color:var(--red);border-color:#f2c2c2}
+.btn.sm{padding:6px 12px;font-size:.78rem;border-radius:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px 20px;box-shadow:0 14px 40px -22px rgba(70,90,200,.3)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #a78bfa;outline-offset:2px}
+
+/* copy button (square, like the workflow chips) */
+.cp{display:inline-grid;place-items:center;width:28px;height:28px;flex:none;border:1px solid var(--line);background:#f4f6fd;color:var(--blue);border-radius:9px;padding:0;cursor:pointer;transition:background .15s}
+.cp svg{width:14px;height:14px}
+.cp:hover{background:#e6ecfd}.cp.ok{color:var(--teal);border-color:#a7e3da;background:#eafaf7}
+
+/* workflow cards */
+.wfs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.wf{display:flex;flex-direction:column;border-top:5px solid var(--teal)}
+.wf.fin{border-top-color:var(--amber)}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.head h2{margin:0;font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
+.mode{font:500 .66rem var(--mono);letter-spacing:.12em;border-radius:999px;padding:4px 11px;border:1px solid;color:var(--teal);border-color:#a7e3da;background:#eafaf7}
+.fin .mode{color:var(--amber);border-color:#f6d29d;background:#fff6e8}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.stages{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px;min-height:0}
+.stage{flex:1;display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;background:#f7f9ff;border:1px solid var(--line);border-radius:16px;padding:8px 14px;position:relative}
+.stage+.stage::before{content:"↓";position:absolute;left:50%;top:-12px;color:#9aa8d4;font:400 .7rem var(--mono);line-height:1}
+.st h3{margin:0;font-size:.98rem;font-weight:700}
+.st p{margin:0;font:400 .7rem var(--mono);color:var(--muted)}
+.grp{display:block;font:500 .66rem var(--mono);letter-spacing:.14em;color:var(--muted);margin-bottom:4px}
+.users{display:flex;flex-wrap:wrap;gap:6px}
+.u{display:inline-flex;align-items:center;background:#fff;border:1px solid #bfeae3;border-radius:10px;padding:5px 6px 5px 11px;font:500 .84rem var(--mono)}
+.u .cp{margin-left:8px}
+.fin .u{border-color:#f6dcb4}
+
+/* corp credential cards */
+.sec-title{margin:8px 0 0;font-size:1.15rem;font-weight:800;letter-spacing:-.02em}
+.extra{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,540px),1fr));gap:16px;align-items:start}
+.corp{position:relative;overflow:hidden;padding-top:22px;container-type:inline-size}
+.corp::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--blue)}
+.corp.t-fin::before{background:var(--amber)}
+.corp.t-nonfin::before{background:var(--teal)}
+.corp.t-both::before{background:linear-gradient(90deg,var(--teal) 50%,var(--amber) 50%)}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.chead h2{margin:0 0 8px;font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font:500 .66rem var(--mono);letter-spacing:.12em;border-radius:999px;padding:4px 11px;border:1px solid;white-space:nowrap}
+.tag.nf{color:var(--teal);border-color:#a7e3da;background:#eafaf7}
+.tag.f{color:var(--amber);border-color:#f6d29d;background:#fff6e8}
+.tag.env{color:var(--violet);border-color:var(--violet-line);background:#faf7ff}
+/* success popup */
+#okp{z-index:70}
+.dlg.ok{max-width:400px;text-align:center;padding:28px 24px 22px}
+.okic{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:#eafaf7;border:2px solid #a7e3da;color:var(--teal);animation:pop .3s ease-out}
+.okic svg{width:32px;height:32px}
+.dlg.ok h2{margin:0 0 6px}
+.dlg.ok p{margin:0 0 16px;font-size:.9rem}
+#cfp{z-index:75}
+.okic.warn{background:#fdeeee;border-color:#f2c2c2;color:var(--red)}
+.cfa{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.cfa .btn{min-width:110px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.cidbox{display:flex;align-items:center;gap:10px}
+.cidbox small,.cols small,.lbl{font:500 .62rem var(--mono);letter-spacing:.14em;color:var(--muted)}
+.cols,.row{display:grid;grid-template-columns:104px repeat(3,minmax(0,1fr));gap:10px;align-items:center}
+.cols{padding:0 12px 6px}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{background:#f7f9ff;border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.lbl{display:none;margin-bottom:3px}
+.chipf{display:flex;align-items:center;gap:8px;min-width:0;background:#fff;border:1px solid #bfeae3;border-radius:10px;padding:5px 6px 5px 11px;font:500 .84rem var(--mono)}
+.chipf .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.chipf.empty{border-style:dashed;border-color:var(--line);color:var(--muted);padding:9px 11px}
+.t-fin .chipf{border-color:#f6dcb4}
+.t-none .chipf{border-color:var(--line)}
+.role{font:500 .68rem var(--mono);letter-spacing:.06em;border-radius:999px;padding:4px 9px;text-align:center;border:1px solid;justify-self:start}
+.role.maker{color:var(--teal);border-color:#a7e3da;background:#eafaf7}
+.role.checker{color:var(--amber);border-color:#f6d29d;background:#fff6e8}
+.role.viewer{color:var(--muted);border-color:var(--line);background:#fff}
+.role.other{color:var(--violet);border-color:var(--violet-line);background:#faf7ff}
+.empty-msg{padding:24px;text-align:center;color:var(--muted);font:400 .85rem var(--mono)}
+@container (max-width:600px){
+  .cols{display:none}
+  .row{grid-template-columns:1fr 1fr}
+  .row .role{grid-column:1/-1}
+  .lbl{display:block}
+}
+
+/* overlays */
+.ov{position:fixed;inset:0;background:rgba(27,36,71,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.ov.on{display:flex}
+.dlg{background:#fff;border-radius:22px;padding:22px;width:100%;max-width:520px;max-height:92vh;overflow:auto;box-shadow:0 30px 80px -30px rgba(20,30,90,.6)}
+.dlg.wide{max-width:760px}
+.dhead{position:sticky;top:-22px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;margin:-22px -22px 6px;padding:16px 22px;border-bottom:1px solid var(--line);border-radius:22px 22px 0 0}
+.dhead h2{margin:0}
+.dlg h2{margin:0 0 4px;font-size:1.25rem}
+.dlg h3{margin:18px 0 8px;font:500 .7rem var(--mono);letter-spacing:.18em;color:var(--violet);display:flex;align-items:center;gap:10px}
+.dlg h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--violet-line),transparent)}
+.dlg p{margin:0 0 12px;color:var(--muted);font-size:.85rem}
+.dlg a{color:var(--blue);font-weight:700}
+.fld{margin-bottom:10px}
+.fld label{display:block;font:500 .66rem var(--mono);letter-spacing:.14em;color:var(--muted);margin-bottom:4px}
+.fld input,.fld select{width:100%;border:1px solid var(--violet-line);border-radius:12px;padding:10px 12px;font:500 .95rem var(--mono);background:#fff;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two.th{grid-template-columns:1fr 1.5fr}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.msg{font-size:.82rem;min-height:1.2em;margin-top:6px}
+.msg.err{color:var(--red)}.msg.ok{color:var(--teal)}
+.hide{display:none!important}
+.dlg .two{align-items:start}
+.fld input,.fld select{height:46px}
+.hrow .hbtns .btn{height:46px;padding:0 16px}
+.actions.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.actions.grid3 .btn{width:100%;min-height:44px;padding:9px 12px;line-height:1.2;white-space:normal;text-align:center}
+.mcorp{border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:10px;background:#fbfcff}
+.mhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.mhead .id{font:500 .92rem var(--mono)}
+.mhead .grow{flex:1;min-width:8px}
+.muser{display:flex;align-items:center;gap:10px;padding:5px 0;border-top:1px dashed var(--line);font:500 .84rem var(--mono)}
+.muser .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.guide ol,.guide ul{margin:0 0 6px;padding-left:20px}
+.guide li{margin-bottom:7px;font-size:.92rem;line-height:1.5}
+.guide li .tag,.guide li .role{margin-right:4px;display:inline-block;vertical-align:middle}
+.guide p{font-size:.92rem}
+.req{color:var(--red);font-style:normal;font-weight:700}
+.fld input.invalid,.fld select.invalid{border-color:var(--red);background:#fff6f6;box-shadow:0 0 0 3px rgba(198,40,40,.14)}
+.hrow{display:flex;gap:8px;align-items:center}
+.hrow input{flex:1;min-width:0;width:auto}
+.hbtns{display:flex;gap:6px;flex:none}
+.fld input:disabled{background:#eef0f7;color:#8a93b2;border-color:var(--line);cursor:not-allowed}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.mhd{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+.mini{border:1px solid var(--line);background:#fff;color:var(--violet);border-radius:8px;font:500 .72rem "DM Sans",sans-serif;padding:3px 9px;cursor:pointer}
+.xbtn{border:1px solid #f2c2c2;background:#fff;color:var(--red);border-radius:9px;width:28px;height:28px;cursor:pointer;flex:none}
+.xbtn:hover{background:#fdeeee}
+
+@media (max-width:900px){
+  .wfs{grid-template-columns:1fr}
+  .stage{grid-template-columns:1fr;gap:6px}
+  .extra{grid-template-columns:1fr}.two,.two.th{grid-template-columns:1fr}.actions.grid3{grid-template-columns:1fr 1fr}
+}
+/* ---------- polished popups ---------- */
+.ov{backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.ov.on .dlg{animation:rise .22s ease-out}
+@keyframes rise{from{transform:translateY(14px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.dlg.ok{max-width:420px;padding:32px 28px 24px;border-radius:26px;position:relative;overflow:hidden}
+.dlg.ok::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--teal),#34d3bd)}
+#cfp .dlg.ok::before{background:linear-gradient(90deg,#e53935,#ff8a65)}
+.okic{width:76px;height:76px;margin:0 auto 16px;box-shadow:0 0 0 8px rgba(15,157,138,.1)}
+.okic.warn{box-shadow:0 0 0 8px rgba(198,40,40,.09)}
+.okic svg{width:36px;height:36px}
+.dlg.ok h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin:0 0 8px}
+.dlg.ok p{font-size:.92rem;line-height:1.5;margin:0 0 20px;color:var(--muted)}
+.cfchip{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:0 0 12px;padding:6px 14px;border-radius:12px;background:#fdeeee;border:1px solid #f2c2c2;color:var(--red);font:500 .95rem var(--mono)}
+.btn.dangerfill{background:linear-gradient(135deg,#e53935,#c62828);border-color:#c62828;color:#fff;box-shadow:0 8px 18px -8px rgba(198,40,40,.7)}
+.cfa .btn,#okBtn{padding:11px 22px;font-size:.92rem;border-radius:14px}
+#okBtn{min-width:140px;box-shadow:0 8px 18px -8px rgba(15,157,138,.7)}
+/* ---------- responsive ---------- */
+html{-webkit-text-size-adjust:100%}
+.app,.extra>*,.wfs>*,.card{min-width:0}
+.chip,.tag{max-width:100%}
+.dlg{max-height:92vh;max-height:92dvh}
+@container (max-width:380px){.row{grid-template-columns:1fr}}
+@media (pointer:coarse){
+  .cp,.xbtn{width:36px;height:36px}
+  .mini{padding:7px 11px}
+  .btn.sm{padding:9px 14px}
+}
+@media (max-width:900px){
+  .app{padding:16px 16px 28px}
+  .dlg.wide{max-width:100%}
+}
+@media (max-width:640px){
+  .app{padding:14px 12px 24px;gap:14px}
+  .top{flex-direction:column;align-items:stretch;gap:12px}
+  .right{width:100%;gap:8px}
+  .right .chips{width:100%}
+  .right .btn{flex:1;min-width:0}
+  h1{font-size:1.55rem}
+  .card{padding:14px;border-radius:18px}
+  .head{flex-wrap:wrap}
+  .head h2,.chead h2{font-size:1.08rem}
+  .stage{padding:10px 12px}
+  .sec-title{display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:1.05rem}
+  .sec-title .chip{margin-left:0!important}
+  .chead{flex-direction:column;gap:8px}
+  .cidbox{flex-wrap:wrap}
+  .u{font-size:.8rem}
+  .ov{padding:0;align-items:flex-end}
+  .dlg{max-width:100%;padding:18px;border-radius:22px 22px 0 0;max-height:94vh;max-height:94dvh}
+  .dhead{margin:-18px -18px 6px;padding:14px 18px;top:-18px}
+  #okp,#cfp{align-items:center;padding:16px}
+  .dlg.ok{max-width:100%;border-radius:22px;padding:24px 18px 18px}
+  .fld input,.fld select{font-size:16px}
+  .actions.grid3{grid-template-columns:1fr}
+  .hrow{flex-wrap:wrap}
+  .hrow input{flex:1 1 100%}
+  .hbtns{width:100%}.hbtns .btn{flex:1}
+  .mhead{gap:6px}
+  .mhead .grow{display:none}
+  .mhead .btn{margin-left:auto}
+  .muser{gap:8px}
+  .cfa .btn{flex:1}
+}
+@media (max-width:380px){
+  h1{font-size:1.35rem}
+  .pill{font-size:10px;letter-spacing:.1em}
+  .actions.grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div><span class="pill"><i></i>MAKER · CHECKER · APPROVE</span><h1>Approval Workflow &amp; User Matrix</h1></div>
+    <div class="right">
+      <div class="chips"><span class="chip">Initiator A1–A2</span><span class="chip">1 approval / checker</span><span class="chip v">Financial ₹1 – ₹25,00,000</span></div>
+      <button class="btn ghost" id="helpBtn" type="button">How to use</button>
+      <button class="btn" id="custBtn" type="button">Customize</button>
+    </div>
+  </div>
+
+  <div class="wfs">
+    <section class="card wf">
+      <div class="head"><h2>Workflow 1 · Non-financial</h2><span class="mode">NON-FINANCIAL</span></div>
+      <div class="facts"><span class="chip">Initiator A1–A2</span><span class="chip">Checker 1 · 1 approval</span><span class="chip">Checker 2 · 1 approval</span></div>
+      <div class="stages">
+        <div class="stage"><div class="st"><h3>Maker</h3><p>starts request</p></div><div><span class="grp">DIRECTOR</span><div class="users"><span class="u">VARUN5208</span><span class="u">VARUN2283</span></div></div></div>
+        <div class="stage"><div class="st"><h3>Checker 1</h3><p>1 approval</p></div><div><span class="grp">PARTNERS</span><div class="users"><span class="u">TAUSIF756</span><span class="u">BHARGAV5665</span></div></div></div>
+        <div class="stage"><div class="st"><h3>Checker 2</h3><p>1 approval</p></div><div><span class="grp">PROPRIETORS</span><div class="users"><span class="u">BHARGAV5665</span><span class="u">RITIKA1985</span></div></div></div>
+      </div>
+    </section>
+    <section class="card wf fin">
+      <div class="head"><h2>Workflow 2 · Financial</h2><span class="mode">FINANCIAL</span></div>
+      <div class="facts"><span class="chip v">₹1 – ₹25,00,000</span><span class="chip">Initiator A1–A2</span><span class="chip">Checker 1 · 1 approval</span><span class="chip">Checker 2 · 1 approval</span></div>
+      <div class="stages">
+        <div class="stage"><div class="st"><h3>Maker</h3><p>starts request</p></div><div><span class="grp">PARTNERS</span><div class="users"><span class="u">TAUSIF756</span><span class="u">BHARGAV5665</span></div></div></div>
+        <div class="stage"><div class="st"><h3>Checker 1</h3><p>1 approval</p></div><div><span class="grp">DIRECTOR</span><div class="users"><span class="u">VARUN5208</span><span class="u">VARUN2283</span></div></div></div>
+        <div class="stage"><div class="st"><h3>Checker 2</h3><p>1 approval</p></div><div><span class="grp">PROPRIETORS</span><div class="users"><span class="u">BHARGAV5665</span><span class="u">RITIKA1985</span></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <h2 class="sec-title">Corp IDs &amp; credentials <span class="chip" style="font-weight:400;margin-left:8px">Keep this page private · shared passwords</span></h2>
+  <div class="extra" id="extra"></div>
+</div>
+
+<!-- How to use (visible to everyone) -->
+<div class="ov" id="help" role="dialog" aria-modal="true" aria-labelledby="ht">
+  <div class="dlg wide guide">
+    <div class="dhead"><h2 id="ht">How to use this page</h2><button class="btn blue" id="hX" type="button">Close</button></div>
+    <p>A quick reference for the Maker → Checker → Approve workflows and the test login details of each Corp ID.</p>
+
+    <h3>QUICK START</h3>
+    <ol>
+      <li>Find the card for your <b>Corp ID</b>. The heading and the badges on the card tell you which workflow it is for.</li>
+      <li>Find the row with your <b>user ID</b> and role.</li>
+      <li>Click the small <b>copy icon</b> inside the field you need (User ID, Login password or Transaction password). It turns into a green tick when copied.</li>
+      <li>Paste it into the application you are logging in to.</li>
+    </ol>
+
+    <h3>WHAT YOU SEE ON A CARD</h3>
+    <ul>
+      <li><span class="tag f">FINANCIAL</span> Corp ID used for financial transactions (Workflow 2, ₹1 – ₹25,00,000).</li>
+      <li><span class="tag nf">NON-FINANCIAL</span> Corp ID used for non-financial requests (Workflow 1).</li>
+      <li><span class="tag nf">NON-FINANCIAL</span> <span class="tag f">FINANCIAL</span> Both badges: the Corp ID can be used for both kinds of workflow.</li>
+      <li><span class="role maker">Maker</span> starts a request. <span class="role checker">Checker</span> reviews and approves it. <span class="role viewer">Viewer</span> can only view.</li>
+      <li><span class="role other">Director</span> <span class="role other">Partner</span> <span class="role other">Proprietor</span> are the user groups used in the workflow stages.</li>
+      <li><b>— none —</b> in the transaction password means that user has no transaction password.</li>
+    </ul>
+
+    <h3>THE TWO WORKFLOW CARDS</h3>
+    <ul>
+      <li>Every request starts with a <b>Maker</b>, then goes to <b>Checker 1</b> and then <b>Checker 2</b>. Each checker gives <b>1 approval</b>.</li>
+      <li><b>Workflow 1 · Non-financial</b> and <b>Workflow 2 · Financial</b> show which user groups play each stage.</li>
+    </ul>
+
+    <h3>FOR ADMINS: CUSTOMIZE</h3>
+    <ol>
+      <li>Click <b>Customize</b>.</li>
+      <li>Pick a Corp ID (or <b>New Corp ID</b>), choose the <b>Type</b> (Financial, Non-financial, Financial + Non-financial or None), the <b>Environment</b> (DEV, SIT, UAT or SIT &amp; UAT), add an optional <b>Heading</b>, then fill role, user ID and passwords and click <b>Add user</b>.</li>
+      <li>To change the Type or Environment of an existing Corp ID, pick it in the <b>Corp ID</b> list, change the dropdown and click <b>Update Type / Environment</b>. A success pop-up confirms it.</li>
+      <li>To remove something, use the red <b>✕</b> next to a user or <b>Delete Corp ID</b> in the list at the bottom.</li>
+      <li>When you are done, click <b>Download index.html</b> and upload that file to Netlify so everyone sees the changes.</li>
+    </ol>
+
+    <h3>GOOD TO KNOW</h3>
+    <ul>
+      <li>Changes you make in Customize are visible only on your device until the downloaded file is uploaded to Netlify.</li>
+      <li>This page holds shared test credentials. Keep it private and never add real production passwords.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Step 2: admin customize page -->
+<div class="ov" id="adm" role="dialog" aria-modal="true" aria-labelledby="at">
+  <div class="dlg wide">
+    <div class="dhead"><h2 id="at">Customize</h2><button class="btn blue" id="aX" type="button">Close</button></div>
+
+    <h3>ADD / UPDATE</h3>
+    <div class="two">
+      <div class="fld"><label for="fCorp">CORP ID <i class="req">*</i></label><select id="fCorp"></select></div>
+      <div class="fld hide" id="newCorpBox"><label for="fNewCorp">NEW CORP ID <i class="req">*</i></label><input id="fNewCorp" type="text" autocomplete="off" placeholder="e.g. KALA109812883"></div>
+    </div>
+    <div class="two">
+      <div class="fld"><label for="fType">TYPE</label>
+        <select id="fType"><option value="fin">Financial</option><option value="nonfin">Non-financial</option><option value="both">Financial + Non-financial</option><option value="none">None</option></select></div>
+      <div class="fld"><label for="fEnv">ENVIRONMENT</label>
+        <select id="fEnv"><option value="">— Not set —</option><option value="dev">DEV</option><option value="sit">SIT</option><option value="uat">UAT</option><option value="sit-uat">SIT &amp; UAT</option></select></div>
+    </div>
+    <div class="fld"><label for="fHead">HEADING (OPTIONAL)</label>
+      <div class="hrow"><input id="fHead" type="text" autocomplete="off" placeholder="e.g. Workflow 2 · Financial">
+        <span class="hbtns hide" id="hBtns"><button class="btn amber sm" id="hEdit" type="button">Edit</button><button class="btn green sm" id="hUpd" type="button" disabled="">Update</button></span></div></div>
+    <div class="two">
+      <div class="fld"><label for="fRole">ROLE <i class="req">*</i></label>
+        <select id="fRole"><option value="" disabled="" selected="">Select role</option><option>Maker</option><option>Checker</option><option>Viewer</option><option>Director</option><option>Partner</option><option>Proprietor</option></select></div>
+      <div class="fld"><label for="fUser">USER ID <i class="req">*</i></label><input id="fUser" type="text" autocomplete="off" placeholder="e.g. TAUSIF001"></div>
+    </div>
+    <div class="two">
+      <div class="fld"><label for="fLogin">LOGIN PASSWORD <i class="req">*</i></label><input id="fLogin" type="text" autocomplete="off" placeholder="e.g. Pass@2580"></div>
+      <div class="fld"><label for="fTp">TRANSACTION PASSWORD</label><input id="fTp" type="text" autocomplete="off" placeholder="leave empty if none"></div>
+    </div>
+    <div class="msg" id="amsg"></div>
+    <div class="actions grid3">
+      <button class="btn green" id="aAdd" type="button">Add user</button>
+      <button class="btn amber" id="aUpd" type="button">Update Type / Environment</button>
+      <button class="btn" id="aManage" type="button" aria-expanded="false" aria-controls="manageWrap">Show existing Corp IDs &amp; users</button>
+    </div>
+
+    <div id="manageWrap" class="hide">
+      <h3>EXISTING CORP IDS &amp; USERS</h3>
+      <div id="manage"></div>
+    </div>
+
+    <div class="actions grid3">
+      <button class="btn navy" id="aDownload" type="button">Download index.html</button>
+      <button class="btn red" id="aReset" type="button">Reset to defaults</button>
+      <button class="btn slate" id="aClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success popup -->
+<div class="ov" id="okp" role="alertdialog" aria-modal="true" aria-labelledby="okt">
+  <div class="dlg ok">
+    <div class="okic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+    <h2 id="okt">Success</h2>
+    <p id="okm"></p>
+    <button class="btn green" id="okBtn" type="button">OK</button>
+  </div>
+</div>
+
+<!-- Confirm popup -->
+<div class="ov" id="cfp" role="alertdialog" aria-modal="true" aria-labelledby="cft">
+  <div class="dlg ok">
+    <div class="okic warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 16.5v.01"/><path d="M10.3 3.9L2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+    <h2 id="cft">Are you sure?</h2>
+    <div class="cfchip hide" id="cfd"></div>
+    <p id="cfm"></p>
+    <div class="cfa"><button class="btn slate" id="cfNo" type="button">Cancel</button><button class="btn dangerfill" id="cfYes" type="button">Delete</button></div>
+  </div>
+</div>
+
+<script>
+/* pristine copy of this page, used by "Download index.html" */
+var TEMPLATE=(function(){var c=document.documentElement.cloneNode(true);
+  c.querySelectorAll('script[src*="netlify"],[data-nf-variant]').forEach(function(n){n.remove();});
+  return '<!DOCTYPE html>\n'+c.outerHTML;})();
+/* ---------- helpers ---------- */
+var ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
+var OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+function wire(b,get){b.innerHTML=ICON;b.setAttribute('aria-label','Copy');b.addEventListener('click',function(){
+  try{navigator.clipboard.writeText(get()).then(function(){b.innerHTML=OK;b.classList.add('ok');setTimeout(function(){b.innerHTML=ICON;b.classList.remove('ok')},1200)})}catch(e){}});}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function copyBtn(get){var b=el('button','cp');b.type='button';wire(b,get);return b;}
+document.querySelectorAll('.u').forEach(function(u){var t=u.textContent;u.appendChild(copyBtn(function(){return t;}));});
+
+/* ---------- data ---------- */
+/* type: fin | nonfin | both | none.  tp:"" = no transaction password.
+   Edit DEFAULTS here (or use Customize -> Copy export) to change what everyone sees. */
+var FILE_VERSION=/*VER_START*/"2026-11-20T09:01:11.136Z"/*VER_END*/;
+var DEFAULTS=/*DATA_START*/{
+ "corps": [
+  {
+   "id": "SHAM102550507",
+   "type": "both",
+   "heading": "Common login · All users",
+   "users": [
+    {
+     "role": "Director",
+     "user": "VARUN5208",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Director",
+     "user": "VARUN2283",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Partner",
+     "user": "TAUSIF756",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Partner · Proprietor",
+     "user": "BHARGAV5665",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Proprietor",
+     "user": "RITIKA1985",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Viewer",
+     "user": "VARUN0434",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    },
+    {
+     "role": "Viewer",
+     "user": "TAUSIFO6682",
+     "login": "Pass@2580",
+     "tp": "Pass@1234"
+    }
+   ]
+  },
+  {
+   "id": "KALA109812883",
+   "type": "both",
+   "heading": "",
+   "users": [
+    {
+     "role": "Maker",
+     "user": "TAUSIF001",
+     "login": "Pass@1234",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Maker",
+     "user": "NILE5208",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Checker",
+     "user": "JYOT0434",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Viewer",
+     "user": "TAUSIF002",
+     "login": "Pass@123",
+     "tp": ""
+    }
+   ]
+  },
+  {
+   "id": "MORT901584071",
+   "type": "both",
+   "heading": "",
+   "users": [
+    {
+     "role": "Maker",
+     "user": "TAUSIF003",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Maker",
+     "user": "SHIVAM003",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Checker",
+     "user": "VARUN003",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Checker",
+     "user": "RITIKA003",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    }
+   ]
+  },
+  {
+   "id": "APTT1000021383",
+   "type": "fin",
+   "heading": "Financial",
+   "users": [
+    {
+     "role": "Maker",
+     "user": "TAUSIF004",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Maker",
+     "user": "SHIVAM004",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Checker",
+     "user": "RITIKA004",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    },
+    {
+     "role": "Checker",
+     "user": "VARUN004",
+     "login": "Pass@2580",
+     "tp": "Pass@0852"
+    }
+   ]
+  }
+ ]
+}/*DATA_END*/;
+var KEY='approval_matrix_state_v3';
+/* local edits are kept only while the deployed file is the same version; a newly deployed file wins */
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.base===FILE_VERSION&&o.state&&Array.isArray(o.state.corps))return o.state;}}catch(e){}return clone(DEFAULTS);}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({base:FILE_VERSION,state:state}));return true;}catch(e){return false;}}
+var state=load();
+
+/* ---------- render page ---------- */
+var ENVS={dev:'DEV',sit:'SIT',uat:'UAT','sit-uat':'SIT & UAT'};
+function tagsEl(type,env){
+  var w=el('div','tags');
+  if(env&&ENVS[env])w.appendChild(el('span','tag env',ENVS[env]));
+  if(type==='nonfin'||type==='both')w.appendChild(el('span','tag nf','NON-FINANCIAL'));
+  if(type==='fin'||type==='both')w.appendChild(el('span','tag f','FINANCIAL'));
+  return w;
+}
+function chipField(val){
+  var f=el('div','chipf');
+  if(!val){f.classList.add('empty');f.appendChild(el('span','t','— none —'));return f;}
+  f.appendChild(el('span','t',val));f.appendChild(copyBtn(function(){return val;}));return f;
+}
+function cell(label,val){var c=el('div');c.appendChild(el('small','lbl',label));c.appendChild(chipField(val));return c;}
+function render(){
+  var box=document.getElementById('extra');box.innerHTML='';
+  if(!state.corps.length){box.appendChild(el('div','card empty-msg','No Corp IDs yet. Use Customize to add one.'));return;}
+  state.corps.forEach(function(c){
+    var card=el('section','card corp t-'+c.type);
+    var head=el('div','chead');
+    var left=el('div');
+    if(c.heading)left.appendChild(el('h2',null,c.heading));
+    var cid=el('div','cidbox');cid.appendChild(el('small',null,'CORP ID'));cid.appendChild(chipField(c.id));
+    left.appendChild(cid);head.appendChild(left);
+    var tg=tagsEl(c.type,c.env);if(tg.children.length)head.appendChild(tg);
+    card.appendChild(head);
+    var cols=el('div','cols');['ROLE','USER ID','LOGIN PASSWORD','TRANSACTION PASSWORD'].forEach(function(t){cols.appendChild(el('small',null,t));});
+    card.appendChild(cols);
+    var rows=el('div','rows');
+    c.users.forEach(function(d){
+      var r=el('div','row');
+      var rk=d.role.toLowerCase();
+      r.appendChild(el('span','role '+(rk==='maker'||rk==='checker'||rk==='viewer'?rk:'other'),d.role));
+      r.appendChild(cell('USER ID',d.user));
+      r.appendChild(cell('LOGIN PASSWORD',d.login));
+      r.appendChild(cell('TRANSACTION PASSWORD',d.tp));
+      rows.appendChild(r);
+    });
+    card.appendChild(rows);box.appendChild(card);
+  });
+}
+
+/* ---------- open / close ---------- */
+var adm=document.getElementById('adm');
+function openOv(o){o.classList.add('on');}function closeOv(o){o.classList.remove('on');}
+document.getElementById('custBtn').addEventListener('click',function(){refreshAdmin();openOv(adm);});
+
+/* ---------- admin page ---------- */
+var fCorp=document.getElementById('fCorp'),newBox=document.getElementById('newCorpBox'),fType=document.getElementById('fType'),fHead=document.getElementById('fHead'),fEnv=document.getElementById('fEnv');
+var okp=document.getElementById('okp');
+function showOk(title,msg){document.getElementById('okt').textContent=title;document.getElementById('okm').textContent=msg;openOv(okp);setTimeout(function(){document.getElementById('okBtn').focus();},30);}
+document.getElementById('okBtn').addEventListener('click',function(){closeOv(okp);});
+okp.addEventListener('click',function(e){if(e.target===okp)closeOv(okp);});
+var cfp=document.getElementById('cfp'),cfAct=null;
+function askConfirm(title,msg,yesLabel,fn,detail){var d=document.getElementById('cfd');d.textContent=detail||'';d.classList.toggle('hide',!detail);document.getElementById('cft').textContent=title;document.getElementById('cfm').textContent=msg;document.getElementById('cfYes').textContent=yesLabel||'Delete';cfAct=fn;openOv(cfp);setTimeout(function(){document.getElementById('cfNo').focus();},30);}
+document.getElementById('cfNo').addEventListener('click',function(){cfAct=null;closeOv(cfp);});
+document.getElementById('cfYes').addEventListener('click',function(){var f=cfAct;cfAct=null;closeOv(cfp);if(f)f();});
+cfp.addEventListener('click',function(e){if(e.target===cfp){cfAct=null;closeOv(cfp);}});
+function findCorp(id){for(var i=0;i<state.corps.length;i++)if(state.corps[i].id===id)return state.corps[i];return null;}
+function say(t,ok){var m=document.getElementById('amsg');m.textContent=t;m.className='msg '+(ok?'ok':'err');}
+var REQ=['fNewCorp','fRole','fUser','fLogin'];
+function markInvalid(elm,on){elm.classList.toggle('invalid',!!on);if(on)elm.setAttribute('aria-invalid','true');else elm.removeAttribute('aria-invalid');}
+REQ.forEach(function(id){var f=document.getElementById(id);['input','change'].forEach(function(ev){f.addEventListener(ev,function(){markInvalid(f,false);});});});
+var editing=false;
+function setEditing(on){
+  editing=on;fHead.disabled=!on;
+  document.getElementById('hEdit').textContent=on?'Cancel':'Edit';
+  document.getElementById('hUpd').disabled=!on;
+  if(on)fHead.focus();
+}
+function syncMeta(){
+  REQ.forEach(function(id){markInvalid(document.getElementById(id),false);});
+  var isNew=fCorp.value==='__new';newBox.classList.toggle('hide',!isNew);
+  var c=isNew?null:findCorp(fCorp.value);
+  fType.value=c?c.type:'fin';fEnv.value=(c&&c.env&&ENVS[c.env])?c.env:'';
+  editing=false;
+  document.getElementById('hBtns').classList.toggle('hide',isNew);
+  if(isNew){fHead.disabled=false;fHead.value='';fHead.placeholder='e.g. Workflow 2 · Financial';}
+  else{fHead.disabled=true;fHead.value=c&&c.heading?c.heading:'';fHead.placeholder='No heading';
+    document.getElementById('hEdit').textContent='Edit';document.getElementById('hUpd').disabled=true;}
+}
+function fillCorps(keep){
+  fCorp.innerHTML='';
+  state.corps.forEach(function(c){var o=el('option',null,c.id);o.value=c.id;fCorp.appendChild(o);});
+  var n=el('option',null,'➕ New Corp ID…');n.value='__new';fCorp.appendChild(n);
+  fCorp.value=(keep&&(keep==='__new'||findCorp(keep)))?keep:(state.corps.length?state.corps[0].id:'__new');
+  syncMeta();
+}
+function renderManage(){
+  var m=document.getElementById('manage');m.innerHTML='';
+  if(!state.corps.length){m.appendChild(el('p',null,'Nothing here yet.'));return;}
+  state.corps.forEach(function(c,ci){
+    var w=el('div','mcorp'),h=el('div','mhead');
+    h.appendChild(el('span','id',c.id));
+    var tg=tagsEl(c.type,c.env);if(tg.children.length)h.appendChild(tg);
+    h.appendChild(el('span','grow'));
+    var dc=el('button','btn danger sm','Delete Corp ID');dc.type='button';
+    dc.addEventListener('click',function(){
+      askConfirm('Delete Corp ID?','This will permanently delete this Corp ID and all '+c.users.length+' of its user'+(c.users.length===1?'':'s')+'. This cannot be undone.','Delete',function(){var i=state.corps.indexOf(c);if(i>-1)state.corps.splice(i,1);commit();showOk('Deleted successfully','Corp ID '+c.id+' and its users were deleted.');},c.id);
+    });
+    h.appendChild(dc);w.appendChild(h);
+    if(c.heading){var hh=el('div','mhd');hh.appendChild(el('span',null,'Heading: '+c.heading));
+      var rh=el('button','mini','Remove heading');rh.type='button';rh.addEventListener('click',function(){c.heading='';commit();showOk('Deleted successfully','Heading was removed from '+c.id+'.');});hh.appendChild(rh);w.appendChild(hh);}
+    c.users.forEach(function(u,ui){
+      var r=el('div','muser');r.appendChild(el('span','role other',u.role));r.appendChild(el('span','nm',u.user));
+      var x=el('button','xbtn','✕');x.type='button';x.setAttribute('aria-label','Delete '+u.user);
+      x.addEventListener('click',function(){
+        askConfirm('Delete user?','This user will be removed from Corp ID '+c.id+'. This cannot be undone.','Delete',function(){var i=c.users.indexOf(u);if(i>-1)c.users.splice(i,1);commit();showOk('Deleted successfully','User '+u.user+' was deleted from '+c.id+'.');},u.user);
+      });
+      r.appendChild(x);w.appendChild(r);
+    });
+    m.appendChild(w);
+  });
+}
+function commit(keep){
+  var ok=save();fillCorps(keep||fCorp.value);renderManage();render();
+  if(!ok)say('Changes apply for this session only (browser storage is blocked).');
+}
+function setManage(open){
+  var w=document.getElementById('manageWrap'),b=document.getElementById('aManage');
+  w.classList.toggle('hide',!open);b.setAttribute('aria-expanded',open?'true':'false');
+  b.innerHTML=open?'Hide existing Corp IDs &amp; users':'Show existing Corp IDs &amp; users';
+  if(open)w.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function refreshAdmin(){fillCorps(fCorp.value);renderManage();setManage(false);say('',true);}
+fCorp.addEventListener('change',syncMeta);
+
+document.getElementById('aAdd').addEventListener('click',function(){
+  var isNew=fCorp.value==='__new';
+  var id=isNew?document.getElementById('fNewCorp').value.trim():fCorp.value;
+  var user=document.getElementById('fUser').value.trim(),login=document.getElementById('fLogin').value,tp=document.getElementById('fTp').value;
+  var role=document.getElementById('fRole').value;
+  var missing=[];
+  function chk(elm,label,bad){markInvalid(elm,bad);if(bad)missing.push({el:elm,label:label});}
+  chk(document.getElementById('fNewCorp'),'Corp ID',isNew&&!id);
+  chk(document.getElementById('fRole'),'Role',!role);
+  chk(document.getElementById('fUser'),'User ID',!user);
+  chk(document.getElementById('fLogin'),'Login password',!login.trim());
+  if(missing.length){say('Required: '+missing.map(function(x){return x.label;}).join(', ')+'.');missing[0].el.focus();return;}
+  var c=findCorp(id);
+  if(!c){c={id:id,type:fType.value,env:fEnv.value,heading:fHead.value.trim(),users:[]};state.corps.push(c);}
+  else{c.type=fType.value;c.env=fEnv.value;}
+  c.users.push({role:role,user:user,login:login,tp:tp});
+  ['fUser','fLogin','fTp','fNewCorp'].forEach(function(i){document.getElementById(i).value='';});
+  commit(id);say('Added '+user+' to '+id+'.',true);
+});
+document.getElementById('aManage').addEventListener('click',function(){setManage(document.getElementById('manageWrap').classList.contains('hide'));});
+document.getElementById('hEdit').addEventListener('click',function(){
+  if(editing){var c=findCorp(fCorp.value);fHead.value=c&&c.heading?c.heading:'';setEditing(false);}
+  else setEditing(true);
+});
+document.getElementById('hUpd').addEventListener('click',function(){
+  var c=findCorp(fCorp.value);if(!c||!editing)return;
+  var h=fHead.value.trim();c.heading=h;commit(c.id);
+  showOk(h?'Updated successfully':'Deleted successfully',h?'Heading updated for '+c.id+'.':'Heading removed from '+c.id+'.');
+});
+document.getElementById('aUpd').addEventListener('click',function(){
+  if(fCorp.value==='__new'){say('Pick an existing Corp ID to update its type.');return;}
+  var c=findCorp(fCorp.value);c.type=fType.value;c.env=fEnv.value;
+  commit(c.id);var ev=ENVS[c.env]||'Not set';
+  showOk('Updated successfully','Corp ID '+c.id+' updated. Environment: '+ev+'.');
+});
+document.getElementById('aDownload').addEventListener('click',function(){
+  var VS='/*VER_'+'START*/',VE='/*VER_'+'END*/',DS='/*DATA_'+'START*/',DE='/*DATA_'+'END*/';
+  var t=TEMPLATE,vs=t.indexOf(VS),ve=t.indexOf(VE),ds=t.indexOf(DS),de=t.indexOf(DE);
+  if(vs<0||ve<vs||ds<ve||de<ds){say('Could not build the file. Please contact the page author.');return;}
+  var ver=new Date().toISOString();
+  var data=JSON.stringify(state,null,1).replace(/</g,'\\u003c');
+  var out=t.slice(0,vs)+VS+JSON.stringify(ver)+t.slice(ve,ds)+DS+data+t.slice(de);
+  try{
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));
+    a.download='index.html';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},3000);
+    say('Downloaded index.html. Upload it to Netlify (replace the old one) so everyone sees these changes.',true);
+  }catch(e){say('Download failed.');}
+});
+document.getElementById('aReset').addEventListener('click',function(){
+  askConfirm('Reset to defaults?','Reset everything to the built-in defaults? Your added and deleted entries will be lost.','Reset',function(){state=clone(DEFAULTS);commit();showOk('Reset successfully','Everything was reset to the built-in defaults.');});
+});
+document.getElementById('aClose').addEventListener('click',function(){closeOv(adm);});
+document.getElementById('aX').addEventListener('click',function(){closeOv(adm);});
+var help=document.getElementById('help');
+document.getElementById('helpBtn').addEventListener('click',function(){help.querySelector('.dlg').scrollTop=0;openOv(help);});
+document.getElementById('hX').addEventListener('click',function(){closeOv(help);});
+help.addEventListener('click',function(e){if(e.target===help)closeOv(help);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){cfAct=null;closeOv(cfp);closeOv(okp);closeOv(adm);closeOv(help);}});
+
+render();
+</script></body></html>
